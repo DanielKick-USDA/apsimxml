@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "apsimxml"
+  site-url: "https://DanielKick-USDA.github.io/apsimxml"
+  description: "Calibration of ApsimX models using machine learning methods."
+  repo-branch: main
+  repo-url: "https://github.com/DanielKick-USDA/apsimxml"
