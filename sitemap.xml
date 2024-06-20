@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://DanielKick-USDA.github.io/apsimxml/index.html</loc>
+    <lastmod>2024-06-20T15:27:33.006Z</lastmod>
+  </url>
+  <url>
+    <loc>https://DanielKick-USDA.github.io/apsimxml/01_sql_to_parquet.html</loc>
+    <lastmod>2024-06-20T15:27:32.962Z</lastmod>
+  </url>
+  <url>
+    <loc>https://DanielKick-USDA.github.io/apsimxml/core.html</loc>
+    <lastmod>2024-06-20T15:27:32.954Z</lastmod>
+  </url>
+  <url>
+    <loc>https://DanielKick-USDA.github.io/apsimxml/02_parquet_dataloader.html</loc>
+    <lastmod>2024-06-20T15:27:33.018Z</lastmod>
+  </url>
+</urlset>
