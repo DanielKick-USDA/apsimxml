@@ -83,6 +83,10 @@ class data_helper():
                             ).to_pandas(
                             ).rename(columns = {'latitude':  'Latitude',
                                                 'longitude': 'Longitude'})
+        
+        # constrain to only those rows where we could load files
+        mask = self.Ids.File.isin([e.replace('.parquet', '') for e in os.listdir(self.results_path)])
+        self.apply_mask(table='Ids', mask= mask)
 
     def apply_mask(self, 
                    table:str, # Name of the table to be filtered. Either "Genotypes" or "Ids"
@@ -495,6 +499,81 @@ class data_helper():
         return(planting_lookup, ref)
 
 # %% ../nbs/02_parquet_dataloader.ipynb 12
+class apsimxDataset(Dataset):
+    "PyTorch dataset to provide simulated phenotype and enviromental covariates. Currently relies on arrays produced by `data_helper`. `__getitem__` returns (y, cultivar, ssurgo, met)"
+    def __init__(
+            self, 
+            result_lookup:torch.tensor,   # Simulated Phenotype Lookup   
+            result:torch.tensor,          # Simulated Phenotype Data
+            ids_lookup:torch.tensor,      # Identifyer Lookup
+            sow_lookup:torch.tensor,      # Encoded SowDate to DOY Lookup 
+            sow_met_concat:bool,          # Specifies wheter the weather tensor should have a 0/1 vector specifying whether the crop has been planted 
+            genotype_lookup:torch.tensor, # Cultivar Parameter Lookup
+            genotype:torch.tensor,        # Cultivar Parameter Data
+            met_lookup:torch.tensor,      # Weather Lookup     
+            met:torch.tensor,             # Weather Data
+            ssurgo_lookup:torch.tensor,   # Soil Lookup  
+            ssurgo:torch.tensor,          # Soil Data
+            ):
+        # super().__init__()
+        self.result_lookup = result_lookup
+        self.result = result
+        self.ids_lookup = ids_lookup
+        self.sow_lookup = sow_lookup
+        self.sow_met_concat = sow_met_concat
+        self.genotype_lookup = genotype_lookup
+        self.genotype = genotype
+        self.met_lookup = met_lookup
+        self.met = met
+        self.ssurgo_lookup = ssurgo_lookup
+        self.ssurgo = ssurgo
+
+    def __len__(self):
+        return len(self.result_lookup.shape[0])
+    
+    def __getitem__(self, idx):
+        # setup keys
+        # get keys from y
+        FactorialUID, Year = self.result_lookup[idx, ]
+        # get use ids to get env keys from Ids table
+        Longitude, Latitude, SoilIdx, File, Genotype, SowDate, FactorialUID = self.ids_lookup[(self.ids_lookup[:, 6] == int(FactorialUID)), ].squeeze()
+        # now we have the full set of keys.
+
+        # get output values
+        y = self.result[idx]
+
+        # cultivar variables
+        mask = (
+            (self.genotype_lookup[:, 0] == File) & 
+            (self.genotype_lookup[:, 1] == Genotype)
+            )
+        cultivar = self.genotype[mask, ]
+
+        # ssurgo data
+        mask = (self.ssurgo_lookup[:, 0] == int(SoilIdx))
+        ssurgo = self.ssurgo[:, mask, :]
+
+        # met data
+        mask = (
+            (self.met_lookup[:, 0] == Longitude) & 
+            (self.met_lookup[:, 1] == Latitude) & 
+            (self.met_lookup[:, 2] == float(Year)) 
+            )
+        met = self.met[mask, :, :]
+        if self.sow_met_concat:
+            # Concatenate a column with 0/1 for whether sowing has occured.
+            mask = (
+                (self.sow_lookup[:, 0] == Year) &
+                (self.sow_lookup[:, 1] == SowDate)
+                )
+            sow_doy = self.sow_lookup[mask, 2]
+            _ = torch.zeros([365])
+            _[sow_doy:] = 1
+            met = torch.concat([met, _[None, :, None]], axis = 2)
+
+        return (y, cultivar, ssurgo, met)
+
+# %% ../nbs/02_parquet_dataloader.ipynb 19
 class apsimxDataset(Dataset):
     "PyTorch dataset to provide simulated phenotype and enviromental covariates. Currently relies on arrays produced by `data_helper`. `__getitem__` returns (y, cultivar, ssurgo, met)"
     def __init__(
