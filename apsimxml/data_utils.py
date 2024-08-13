@@ -132,7 +132,7 @@ class data_helper():
             col_order = ''
             for file in tqdm(get_files):
                 # print(f'{file}')
-                res = pq.read_table(f'{x.results_path+file}.parquet').to_pandas()
+                res = pq.read_table(f'{self.results_path+file}.parquet').to_pandas()
 
                 # columns should be in the same order, but we will force them to be here. 
                 if col_order == '':
@@ -489,7 +489,7 @@ class data_helper():
         _=_.merge(_prep_unix_epoch_to_date(max_year = 2025).loc[:, ['Year', 'SowDate', 'DOY']])
         # overwrite SowDate with encoded version
 
-        _.SowDate = [x.encoder_SowDate[e] for e in _.SowDate]
+        _.SowDate = [self.encoder_SowDate[e] for e in _.SowDate]
 
         ref = {
             'lookup_names': list(_)
@@ -604,7 +604,7 @@ class apsimxDataset(Dataset):
         self.ssurgo = ssurgo
 
     def __len__(self):
-        return len(self.result_lookup.shape[0])
+        return self.result_lookup.shape[0]
     
     def __getitem__(self, idx):
         # setup keys
